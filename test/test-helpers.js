@@ -216,7 +216,11 @@ function makeMaliciousThing(user) {
 }
 
 function makeThingsFixtures() {
-  const testUsers = makeUsersArray()
+  const preppedUsers = makeUsersArray().map(user => ({
+    ...user,
+    password: bcrypt.hashSync(user.password, 1)
+  }));
+  const testUsers = preppedUsers;
   const testThings = makeThingsArray(testUsers)
   const testReviews = makeReviewsArray(testUsers, testThings)
   return { testUsers, testThings, testReviews }
@@ -266,7 +270,7 @@ function seedThingsTables(db, users, things, reviews=[]) {
 }
 
 function seedMaliciousThing(db, user, thing) {
-  return seedUsers(db, users)
+  return seedUsers(db, [user])
     .then(() =>
       db
         .into('thingful_things')
