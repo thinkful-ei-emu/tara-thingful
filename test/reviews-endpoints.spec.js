@@ -10,11 +10,6 @@ describe('Reviews Endpoints', function() {
     testUsers,
   } = helpers.makeThingsFixtures()
 
-  function makeAuthHeader(user) {
-    const token = Buffer.from(`${user.user_name}:${user.password}`).toString('base64')
-    return `Basic ${token}`
-  }
-
   before('make knex instance', () => {
     db = knex({
       client: 'pg',
@@ -43,54 +38,50 @@ describe('Reviews Endpoints', function() {
       const testThing = testThings[0]
       const testUser = testUsers[0]
       const newReview = {
-        text: 'Test new review',
-        rating: 3,
+        rating: 2,
         thing_id: testThing.id,
-        user_id: testUser.id,
+        text: testThing.content,
+        user_id: testUser.id
       }
       return supertest(app)
         .post('/api/reviews')
-        .set('Authorization', makeAuthHeader(testUsers[0]))
+        .set('Authorization', helpers.makeAuthHeader(testUsers[0]))
         .send(newReview)
         .expect(201)
         .expect(res => {
           expect(res.body).to.have.property('id')
           expect(res.body.rating).to.eql(newReview.rating)
-          expect(res.body.text).to.eql(newReview.text)
           expect(res.body.thing_id).to.eql(newReview.thing_id)
           expect(res.body.user.id).to.eql(testUser.id)
           expect(res.headers.location).to.eql(`/api/reviews/${res.body.id}`)
-          const expectedDate = new Date().toLocaleString()
+          const expectedDate = new Date().toLocaleString('en', { timeZone: 'UTC' })
           const actualDate = new Date(res.body.date_created).toLocaleString()
           expect(actualDate).to.eql(expectedDate)
         })
         .expect(res =>
           db
-            .from('thingful_reviews')
+            .from('blogful_reviews')
             .select('*')
             .where({ id: res.body.id })
             .first()
             .then(row => {
-              expect(row.text).to.eql(newReview.text)
               expect(row.rating).to.eql(newReview.rating)
               expect(row.thing_id).to.eql(newReview.thing_id)
-              expect(row.user_id).to.eql(newReview.user_id)
-              const expectedDate = new Date().toLocaleString()
+              expect(row.user_id).to.eql(testUser.id)
+              const expectedDate = new Date().toLocaleString('en', { timeZone: 'UTC' })
               const actualDate = new Date(row.date_created).toLocaleString()
               expect(actualDate).to.eql(expectedDate)
             })
         )
     })
 
-    const requiredFields = ['text', 'rating', 'user_id', 'thing_id']
+    const requiredFields = ['rating', 'thing_id']
 
     requiredFields.forEach(field => {
       const testThing = testThings[0]
       const testUser = testUsers[0]
       const newReview = {
-        text: 'Test new review',
-        rating: 3,
-        user_id: testUser.id,
+        rating: 4,
         thing_id: testThing.id,
       }
 
@@ -99,7 +90,7 @@ describe('Reviews Endpoints', function() {
 
         return supertest(app)
           .post('/api/reviews')
-          .set('Authorization', makeAuthHeader(testUsers[0]))
+          .set('Authorization', helpers.makeAuthHeader(testUser))
           .send(newReview)
           .expect(400, {
             error: `Missing '${field}' in request body`,

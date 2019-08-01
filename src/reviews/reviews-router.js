@@ -1,7 +1,7 @@
 const express = require('express')
 const path = require('path')
 const ReviewsService = require('./reviews-service')
-const { requireAuth } = require('../middleware/basic-auth')
+const { requireAuth } = require('../middleware/jwt-auth')
 
 const reviewsRouter = express.Router()
 const jsonBodyParser = express.json()
@@ -9,7 +9,10 @@ const jsonBodyParser = express.json()
 reviewsRouter
   .route('/')
   .post(requireAuth, jsonBodyParser, (req, res, next) => {
-    const { thing_id, rating, text, user_id } = req.body
+    const { thing_id, rating, text } = req.body
+    const user_id = req.user.id;
+//    const user_id = req.headers.authorization.split(' ')[1];
+//    console.log(user_id);
     const newReview = { thing_id, rating, text, user_id }
 
     for (const [key, value] of Object.entries(newReview))

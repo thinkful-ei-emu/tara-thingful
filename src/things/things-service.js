@@ -3,7 +3,6 @@ const Treeize = require('treeize')
 
 const ThingsService = {
   getAllThings(db) {
-    console.log('getallthings called');
     return db
       .from('thingful_things AS thg')
       .select(
@@ -34,14 +33,12 @@ const ThingsService = {
   },
 
   getById(db, id) {
-    console.log('getbyIdcalled');
     return ThingsService.getAllThings(db)
       .where('thg.id', id)
-      .first()
+      .first();
   },
 
   getReviewsForThing(db, thing_id) {
-    console.log('getreviewsforthing called');
     return db
       .from('thingful_reviews AS rev')
       .select(
@@ -60,27 +57,23 @@ const ThingsService = {
       .groupBy('rev.id', 'usr.id')
   },
 
-  serializeThings(things) {
-    return things.map(this.serializeThing)
-  },
-
   serializeThing(thing) {
-    const thingTree = new Treeize()
-
-    // Some light hackiness to allow for the fact that `treeize`
-    // only accepts arrays of objects, and we want to use a single
-    // object.
-    const thingData = thingTree.grow([ thing ]).getData()[0]
 
     return {
-      id: thingData.id,
-      title: xss(thingData.title),
-      content: xss(thingData.content),
-      date_created: thingData.date_created,
-      image: thingData.image,
-      user: thingData.user || {},
-      number_of_reviews: Number(thingData.number_of_reviews) || 0,
-      average_review_rating: Math.round(thingData.average_review_rating) || 0,
+      id: thing.id,
+      title: xss(thing.title),
+      content: xss(thing.content),
+      date_created: thing.date_created,
+      image: thing.image,
+      user: {
+        id: thing['user:id'],
+        user_name: thing['user:user_name'],
+        full_name: thing['user:full_name'],
+        nickname: thing['user:nickname'],
+        date_created: thing['user:date_created'],
+      },
+      number_of_reviews: Number(thing.number_of_reviews) || 0,
+      average_review_rating: Math.round(thing.average_review_rating) || 0,
     }
   },
 

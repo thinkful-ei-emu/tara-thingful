@@ -1,6 +1,6 @@
 const express = require('express')
 const ThingsService = require('./things-service')
-const { requireAuth } = require('../middleware/basic-auth')
+const { requireAuth } = require('../middleware/jwt-auth')
 
 const thingsRouter = express.Router()
 
@@ -9,7 +9,7 @@ thingsRouter
   .get((req, res, next) => {
     ThingsService.getAllThings(req.app.get('db'))
       .then(things => {
-        res.json(ThingsService.serializeThings(things))
+        res.json(things.map(ThingsService.serializeThing))
       })
       .catch(next)
   })
@@ -31,7 +31,7 @@ thingsRouter.route('/:thing_id/reviews/')
       req.params.thing_id
     )
       .then(reviews => {
-        res.json(ThingsService.serializeThingReviews(reviews))
+        res.json(reviews.map(ThingsService.serializeThingReview))
       })
       .catch(next)
   })
